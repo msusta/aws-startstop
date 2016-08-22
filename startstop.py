@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-import boto
-import boto.ec2
+import boto3
 import time
 import datetime
 
@@ -15,7 +14,7 @@ formatter = logging.Formatter('%(name)s %(asctime)s [%(levelname)s] %(message)s'
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-boto_logger = logging.getLogger('boto')
+boto_logger = logging.getLogger('boto3')
 boto_logger.setLevel(logging.INFO)
 boto_logger.addHandler(ch)
 
@@ -42,8 +41,8 @@ def check_resource(resource_offset):
         return 0
 
 def ec2_handler():
-    ec2_connection = boto.ec2.connect_to_region('eu-central-1')
-    instance_list = ec2_connection.get_only_instances()
+    ec2 = boto3.resource('ec2')
+    instance_list = ec2.instances.all()
 
     stop_list = []
     start_list = []
@@ -62,13 +61,15 @@ def ec2_handler():
 
     if len(stop_list) > 0:
         logger.info('Stopping instances: {0}'.format(stop_list))
-        ec2_connection.stop_instances(instance_ids=stop_list, dry_run=debug_flag)
+        stop_collection = ec2.instances.filter(InstanceIds=stop_list)
+        stop_collection.stop(DryRun=debug_flag)
     else:
         logger.info('No instances to stop')
 
     if len(start_list) > 0:
         logger.info('Starting instances: {0}'.format(start_list))
-        ec2_connection.start_instances(instance_ids=start_list, dry_run=debug_flag)
+        start_collection = ec2.instances.filter(InstanceIds=start_list)
+        start_collection.start(DryRun=debug_flag)
     else:
         logger.info('No instances to start')
 

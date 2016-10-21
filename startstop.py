@@ -7,16 +7,16 @@ import datetime
 # log
 import logging
 logger = logging.getLogger('startstop')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(name)s %(asctime)s [%(levelname)s] %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-boto_logger = logging.getLogger('boto3')
-boto_logger.setLevel(logging.INFO)
-boto_logger.addHandler(ch)
+#boto_logger = logging.getLogger('boto3')
+#boto_logger.setLevel(logging.INFO)
+#boto_logger.addHandler(ch)
 
 #
 START_HOUR=7
@@ -49,15 +49,18 @@ def ec2_handler():
 
     for instance in instance_list:
         logger.debug('Processing instance {0}'.format(instance.id))
-        if 'Nightly' in instance.tags:
-            resource_offset = instance.tags.get('Nightly')
-            should_run = check_resource(resource_offset)
-            if instance.state == 'stopped' and should_run:
-                start_list.append(instance.id)
-                logger.debug('Adding instance {0} to start list'.format(instance.id))
-            if instance.state == 'running' and not should_run:
-                stop_list.append(instance.id)
-                logger.debug('Adding instance {0} to stop list'.format(instance.id))
+        for tag in instance.tags:
+            if tag.get('Key') == 'Nightly':
+                resource_offset = tag.get('Value')
+                logger.debug('Nightly tag set at {0} offset'.format(resource_offset))
+                should_run = check_resource(resource_offset)
+                logger.debug('Instance state: {0}'.format(instance.state))
+                if instance.state.get('Name') == 'stopped' and should_run:
+                    start_list.append(instance.id)
+                    logger.debug('Adding instance {0} to start list'.format(instance.id))
+                if instance.state.get('Name') == 'running' and not should_run:
+                    stop_list.append(instance.id)
+                    logger.debug('Adding instance {0} to stop list'.format(instance.id))
 
     if len(stop_list) > 0:
         logger.info('Stopping instances: {0}'.format(stop_list))

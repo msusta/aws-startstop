@@ -1,3 +1,8 @@
+# Deprecated
+
+This is now deprecated and won't be developed further. Use the following solution by AWS:
+https://aws.amazon.com/answers/infrastructure-management/instance-scheduler/
+
 # Start-stop service
 This service was created to automatically stop the development resources during nights and weekends so you don't have to pay for their use.
 
